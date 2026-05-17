@@ -14,7 +14,7 @@ ha_integration_type: service
 related:
   - docs: /docs/configuration/
     title: Configuration file
-ha_quality_scale: legacy
+ha_quality_scale: bronze
 ---
 
 The **openSenseMap** {% term integration %} queries the open data API of [openSenseMap.org](https://opensensemap.org/) to monitor an air-quality sensor station.
