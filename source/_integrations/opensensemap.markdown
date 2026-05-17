@@ -9,6 +9,7 @@ ha_config_flow: true
 ha_domain: opensensemap
 ha_platforms:
   - air_quality
+  - sensor
 ha_integration_type: service
 related:
   - docs: /docs/configuration/
@@ -28,6 +29,27 @@ To find the ID of a station, open it on [openSenseMap](https://opensensemap.org/
 Station ID:
   description: The ID of the openSenseMap station to monitor.
 {% endconfiguration_basic %}
+
+## Sensors
+
+Each configured station is exposed as a device with the following sensor entities. Sensors are only populated when the configured station reports the corresponding measurement.
+
+Enabled by default:
+
+- **PM2.5** — particulate matter under 2.5 µm (µg/m³)
+- **PM10** — particulate matter under 10 µm (µg/m³)
+- **Temperature** (°C)
+- **Humidity** (%)
+- **Atmospheric pressure** (hPa)
+
+Disabled by default — enable them from the entity registry if your station reports these measurements:
+
+- **PM1** — particulate matter under 1 µm (µg/m³)
+- **Illuminance** (lx)
+- **UV index**
+- **Wind speed** (m/s)
+- **Wind direction** (°)
+- **Precipitation** (mm)
 
 ## YAML configuration is deprecated
 
