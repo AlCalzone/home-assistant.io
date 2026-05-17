@@ -30,6 +30,10 @@ Station ID:
   description: The ID of the openSenseMap station to monitor.
 {% endconfiguration_basic %}
 
+## Air quality entity is deprecated
+
+The legacy `air_quality` entity that exposes PM2.5 and PM10 as state attributes is deprecated and will be removed in Home Assistant 2026.11. The dedicated `sensor.<station>_pm2_5` and `sensor.<station>_pm10` entities replace it and provide proper device classes, state classes, and historical statistics. The legacy entity is disabled by default; existing installations are notified via a repair issue. Update any automations or dashboards to use the new sensor entities before the removal date.
+
 ## Sensors
 
 Each configured station is exposed as a device with the following sensor entities. Sensors are only populated when the configured station reports the corresponding measurement.
