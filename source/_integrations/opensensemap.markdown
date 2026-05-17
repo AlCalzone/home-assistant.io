@@ -5,42 +5,39 @@ ha_category:
   - Health
 ha_release: 0.85
 ha_iot_class: Cloud Polling
+ha_config_flow: true
 ha_domain: opensensemap
 ha_platforms:
   - air_quality
-ha_integration_type: integration
+ha_integration_type: service
 related:
   - docs: /docs/configuration/
     title: Configuration file
 ha_quality_scale: legacy
 ---
 
-The **openSenseMap** {% term integration %} will query the open data API of [openSenseMap.org](https://opensensemap.org/) to monitor air quality sensor station.
+The **openSenseMap** {% term integration %} queries the open data API of [openSenseMap.org](https://opensensemap.org/) to monitor an air-quality sensor station.
 
 ## Setup
 
-To get the ID of a station you need to select it on the [openSense map](https://opensensemap.org/) and find it in the addressbar of your browser. It's the last part of the URL, e.g., `5b450e565dc1ec001bf7cd1d` [https://opensensemap.org/explore/5b450e565dc1ec001bf7cd1d](https://opensensemap.org/explore/5b450e565dc1ec001bf7cd1d).
+To find the ID of a station, open it on [openSenseMap](https://opensensemap.org/) and copy the last segment of the URL — for example, `5b450e565dc1ec001bf7cd1d` in [https://opensensemap.org/explore/5b450e565dc1ec001bf7cd1d](https://opensensemap.org/explore/5b450e565dc1ec001bf7cd1d).
 
-## Manual configuration
+{% include integrations/config_flow.md %}
 
-To enable this {% term integration %}, add the following lines to your {% term "`configuration.yaml`" %} file.
-{% include integrations/restart_ha_after_config_inclusion.md %}
+{% configuration_basic %}
+Station ID:
+  description: The ID of the openSenseMap station to monitor.
+{% endconfiguration_basic %}
+
+## YAML configuration is deprecated
+
+Previously, openSenseMap was configured under the `air_quality` platform in {% term "`configuration.yaml`" %}:
 
 ```yaml
-# Example configuration.yaml entry
+# Example configuration.yaml entry (deprecated)
 air_quality:
   - platform: opensensemap
     station_id: STATION_ID
 ```
 
-{% configuration %}
-station_id:
-  description: The ID of the station to monitor.
-  required: true
-  type: string
-name:
-  description: Name of the sensor to use in the frontend.
-  required: false
-  default: Station name
-  type: string
-{% endconfiguration %}
+This configuration method is **deprecated**. Existing YAML configuration is imported automatically the first time Home Assistant starts after the upgrade, and a repair issue is raised to remind you to remove the `air_quality` entry from your {% term "`configuration.yaml`" %} file. Support for YAML configuration will be removed in a future release.
