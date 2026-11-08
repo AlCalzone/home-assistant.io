@@ -11,17 +11,20 @@ ha_domain: e3dc
 ha_config_flow: true
 ha_integration_type: device
 ha_platforms:
+  - number
   - sensor
+  - switch
 ha_quality_scale: bronze
 ha_zeroconf: true
 ---
 
-The **E3/DC** {% term integration %} connects Home Assistant to an E3/DC home power station from HagerEnergy over Modbus TCP. It reads the power flows between solar, battery, house, grid and wallboxes.
+The **E3/DC** {% term integration %} connects Home Assistant to an E3/DC home power station from HagerEnergy over Modbus TCP. It reads the power flows between solar, battery, house, grid and wallboxes, and can control the battery and the grid feed-in.
 
 ## Use cases
 
 - Seeing where your power goes. Solar production, battery charging and discharging, house consumption and grid import and export are all live sensors.
 - Running appliances on surplus solar. Start a heavy load once the solar power exceeds what the house uses.
+- Charging the battery from the grid while power is cheap, or capping the feed-in when the grid operator asks for it.
 - Knowing when the house runs on backup power. The emergency power sensor shows when the power station supplies the house during a grid failure.
 
 ## Supported devices
@@ -73,9 +76,66 @@ These sensors depend on the installed hardware:
 
 The integration checks the wallboxes and power meters when it starts. After you add a wallbox or a power meter, reload the integration.
 
+### Numbers and switches for remote control
+
+On firmware that supports remote control, the power station device has three setpoints. Each is a number and a switch:
+
+- **Battery power setpoint** and **Battery power control**: charge (positive) or discharge (negative) the battery at a fixed power. PV power charges first, and the grid makes up the rest.
+- **Feed-in limit setpoint** and **Feed-in limit control**: cap the power fed into the grid.
+- **Active power limit setpoint** and **Active power limit control**: cap the inverter's output, as a percentage of its rated power. The cap ignores the house's consumption.
+
+Setting a number writes the value to the power station and turns its switch on. The power station drops a setpoint 30 seconds after the last write, so while the switch is on, the integration writes the value again every 10 seconds. Turning the switch off hands control back: remote battery control ends at once, the integration writes 100 % as the active power limit, and the feed-in limit lapses within 30 seconds. Writing 100 % is itself a setpoint, so once the active power failsafe timeout runs out, the active power failsafe value applies. Check on your power station that this is what you want. Turning the switch on again holds the last value set, which is kept across restarts.
+
+The numbers and switches stay usable while a poll fails, because holding a setpoint doesn't depend on the last poll. A switch shows unknown while writing to the power station fails, because the power station may have dropped the setpoint. If a setpoint spans two registers and can only be half-written, setting it fails and the error says what the integration tried to put back.
+
+## Examples
+
+### Charge the battery from the grid while power is cheap
+
+This automation charges at 3 kW while a price sensor is below 15 cents, and hands the battery back when the price rises.
+
+{% raw %}
+
+```yaml
+alias: "Charge the battery while power is cheap"
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.electricity_price
+    below: 0.15
+    id: cheap
+  - trigger: numeric_state
+    entity_id: sensor.electricity_price
+    above: 0.15
+    id: expensive
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: cheap
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: number.e3_dc_s10_x_battery_power_setpoint
+            data:
+              value: 3000
+      - conditions:
+          - condition: trigger
+            id: expensive
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: switch.e3_dc_s10_x_battery_power_control
+```
+
+{% endraw %}
+
 ## Data updates
 
 The integration polls the power flows every 5 seconds.
+
+## Known limitations
+
+- A setpoint is held while Home Assistant runs. When Home Assistant stops, or when you reload or disable the integration, it hands every setpoint back, giving up after about 5 seconds on an unresponsive power station. If that fails, the switch shows off anyway. The battery power and the feed-in limit lapse within 30 seconds. The active power limit lasts for the active power failsafe timeout, after which the active power failsafe value applies. With a failsafe timeout of 0, it lasts until it is written again. After a restart, turn the setpoint's switch on again.
 
 ## Troubleshooting
 
@@ -129,6 +189,22 @@ Home Assistant recognizes your power station by the serial number it read when y
 
 1. Give the power station of this entry its old IP address back, for example with a fixed IP address in your router.
 2. To use the power station that answers now, delete this entry and add the integration again.
+
+{% enddetails %}
+
+{% details "Remote control numbers and switches are missing" %}
+
+### Symptom: The remote control numbers and switches are missing
+
+The power station device has no numbers or switches for the battery power, the feed-in limit or the active power limit.
+
+#### Description
+
+The firmware does not serve the remote control registers.
+
+#### Resolution
+
+Update the power station's firmware, then reload the integration.
 
 {% enddetails %}
 
